@@ -16,10 +16,6 @@ type TemplateCardProps = {
   onClick?: (template: Template) => void;
 };
 
-const channelColors: Record<string, string> = {
-  email: "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
-  push: "bg-cyan-50 border-cyan-200 dark:bg-cyan-950/30 dark:border-cyan-800",
-};
 
 export const TemplateCard = ({ template, onClick }: TemplateCardProps) => {
   return (
@@ -34,7 +30,6 @@ export const TemplateCard = ({ template, onClick }: TemplateCardProps) => {
         "hover:shadow-md hover:-translate-y-1 hover:scale-[1.02]",
         onClick &&
           "cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40",
-        template.channel && channelColors[template.channel], 
       )}
     >
       {/* Header */}

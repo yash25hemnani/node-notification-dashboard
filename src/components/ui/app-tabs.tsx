@@ -1,11 +1,6 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type TabItem = {
   value: string;
@@ -31,7 +26,8 @@ export function AppTabs({
   if (!tabs.length) return null;
 
   const activeTab =
-    searchParams.get(queryKey) && tabs.some((t) => t.value === searchParams.get(queryKey))
+    searchParams.get(queryKey) &&
+    tabs.some((t) => t.value === searchParams.get(queryKey))
       ? searchParams.get(queryKey)!
       : tabs[0].value;
 
@@ -48,16 +44,17 @@ export function AppTabs({
       className={className || "w-full"}
     >
       <TabsList
-        className={
-          listClassName ||
-          `grid w-full`
-        }
+        className={listClassName || "grid mx-auto w-100"}
         style={{
           gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
         }}
       >
         {tabs.map((tab) => (
-          <TabsTrigger key={tab.value} value={tab.value}>
+          <TabsTrigger
+            key={tab.value}
+            value={tab.value}
+            className="px-8 text-sm hover:cursor-pointer"
+          >
             {tab.label}
           </TabsTrigger>
         ))}
