@@ -8,6 +8,7 @@ import { TemplateCard } from "./TemplateCard";
 import { PlaceholderCard } from "@/components/ui/placeholder-card";
 import { Button } from "@/components/ui/button";
 import type { Template } from "../types/templates.type";
+import { Plus } from "lucide-react";
 
 // TemplateList.tsx
 const TemplateList = ({
@@ -57,7 +58,8 @@ const TemplateList = ({
           text={`No ${channel} templates yet`}
           action={
             <Button size="sm" onClick={onCreateClick}>
-              Create Template
+              <Plus />
+              New Template
             </Button>
           }
         />

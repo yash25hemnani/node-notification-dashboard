@@ -21,7 +21,7 @@ import { Box } from "./ui/box";
 import { Button } from "./ui/button";
 
 const navItems = [
-  { to: "/", icon: Home, label: "Home" },
+  { to: "/", icon: Home, label: "Dashboard" },
   { to: "/notifications", icon: Bell, label: "Notifications" },
   { to: "/templates", icon: LayoutTemplate, label: "Templates" },
   { to: "/api-keys", icon: KeySquare, label: "API Keys" },

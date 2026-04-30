@@ -8,12 +8,13 @@ import { useAuthStore } from "./stores/authStore";
 import GuestGuard from "./components/guards/GuestGuard";
 import ProtectedRoute from "./components/guards/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
-import Home from "./pages/Home";
 import ApiKeys from "./pages/apiKeys/ApiKeys";
 import LoginPage from "./pages/authentication/LoginPage";
 import SignupPage from "./pages/authentication/SignupPage";
+import Dashboard from "./pages/dashboard/Dashboard";
 import Templates from "./pages/templates/Templates";
 import ViewSingleTemplate from "./pages/templates/ViewSingleTemplate";
+import QueueBoard from "./pages/dashboard/QueueBoard";
 
 const router = createBrowserRouter([
   {
@@ -23,7 +24,14 @@ const router = createBrowserRouter([
         path: "/",
         element: <MainLayout />,
         children: [
-          { index: true, element: <Home /> },
+          { index: true, element: <Dashboard /> },
+        ],
+      },
+      {
+        path: "/queue-board/:channel",
+        element: <MainLayout />,
+        children: [
+          { index: true, element: <QueueBoard /> },
         ],
       },
       {
@@ -69,8 +77,8 @@ function App() {
       try {
         const refreshRes = await apiClient.post("/auth/refresh/");
         if (refreshRes.status === 200 && !cancelled) {
-          const { user, access_token } = refreshRes.data.data;
-          setAuth(access_token, user);
+          const { user, access_token: accessToken } = refreshRes.data.data;
+          setAuth(accessToken, user);
         }
       } catch {
         // no valid session — that's fine

@@ -34,7 +34,7 @@ const RotateApiKeyForm = ({
 
       if (response.status === 201) {
         showAlert("SUCCESS", "API key rotated successfully!", "success");
-        onSuccess(response.data.data.api_key); // ← pass raw key up
+        onSuccess(response.data.data.apiKey); // ← pass raw key up
       }
     } catch (error) {
       const { code, message } = extractApiError(error);

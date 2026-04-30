@@ -10,10 +10,12 @@ import {
 } from "../schemas/signupForm.schema";
 import { extractApiError } from "@/utils/extractApiError";
 import { useAuthStore } from "@/stores/authStore";
+import { useNavigate } from "react-router-dom";
 
 const SignupForm = () => {
   const showAlert = useAlertStore((s) => s.showAlert);
   const setAuth = useAuthStore((s) => s.setAuth)
+  const navigate = useNavigate()
 
   const methods = useForm<SignupFormValues>({
     resolver: zodResolver(signupFormSchema),
@@ -35,7 +37,7 @@ const SignupForm = () => {
         console.log(response.data)
         
         if (data) {
-          setAuth(data.access_token, data.user)
+          setAuth(data.accessToken, data.user)
         }
         
         showAlert(
@@ -43,6 +45,8 @@ const SignupForm = () => {
           "Your account has been created",
           "success",
         );
+
+        navigate("/")
       }
     } catch (error: any) {
       const { code, message } = extractApiError(error);

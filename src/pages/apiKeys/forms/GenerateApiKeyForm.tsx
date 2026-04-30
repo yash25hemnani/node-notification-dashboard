@@ -32,7 +32,7 @@ const GenerateApiKeyForm = ({
 
       if (response.status === 201) {
         showAlert("SUCCESS", "API key generated successfully!", "success");
-        onSuccess(response.data.data.api_key);
+        onSuccess(response.data.data.apiKey);
       }
     } catch (error) {
       const { code, message } = extractApiError(error);

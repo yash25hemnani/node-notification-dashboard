@@ -44,7 +44,7 @@ export function AppTabs({
       className={className || "w-full"}
     >
       <TabsList
-        className={listClassName || "grid mx-auto w-100"}
+        className={listClassName || "grid mx-auto w-120"}
         style={{
           gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
         }}
@@ -53,7 +53,7 @@ export function AppTabs({
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className="px-8 text-sm hover:cursor-pointer"
+            className="px-8 text-sm hover:cursor-pointer gap-1"
           >
             {tab.label}
           </TabsTrigger>

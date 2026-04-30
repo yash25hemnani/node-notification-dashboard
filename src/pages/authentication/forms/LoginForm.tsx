@@ -34,7 +34,7 @@ const LoginForm = () => {
         console.log(response.data)
         
         if (data) {
-          setAuth(data.access_token, data.user)
+          setAuth(data.accessToken, data.user)
         }
         
         showAlert(
