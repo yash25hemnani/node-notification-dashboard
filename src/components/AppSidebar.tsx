@@ -16,13 +16,12 @@ import apiClient from "@/api/apiClient";
 import { useAlertStore } from "@/stores/alertStore";
 import { useAuthStore } from "@/stores/authStore";
 import { extractApiError } from "@/utils/extractApiError";
-import { Bell, Home, KeySquare, LayoutTemplate, LogOut } from "lucide-react";
+import { Home, KeySquare, LayoutTemplate, LogOut } from "lucide-react";
 import { Box } from "./ui/box";
 import { Button } from "./ui/button";
 
 const navItems = [
   { to: "/", icon: Home, label: "Dashboard" },
-  { to: "/notifications", icon: Bell, label: "Notifications" },
   { to: "/templates", icon: LayoutTemplate, label: "Templates" },
   { to: "/api-keys", icon: KeySquare, label: "API Keys" },
 ];

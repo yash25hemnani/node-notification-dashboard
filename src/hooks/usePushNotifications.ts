@@ -45,6 +45,9 @@ export function usePushNotifications() {
 
       if (existingSubscription) {
         await existingSubscription.unsubscribe();
+        await apiClient.post("/subscription/internal-unsubscribe", {
+          endpoint: existingSubscription.endpoint,
+        });
       }
 
       const subscription = await registration.pushManager.subscribe({
@@ -52,7 +55,7 @@ export function usePushNotifications() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
-      await apiClient.post("/subscripition/internal-subscribe", {
+      await apiClient.post("/subscription/internal-subscribe", {
         subscription,
       });
 

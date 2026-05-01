@@ -1,26 +1,28 @@
 import apiClient from "@/api/apiClient";
 import TipTapFormField from "@/components/TipTapFormField";
+import AppDialog from "@/components/ui/app-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/form-input";
 import { FormProvider } from "@/components/ui/form-provider";
+import { FormTextarea } from "@/components/ui/form-textarea";
 import PageContainer from "@/components/ui/page-container";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAlertStore } from "@/stores/alertStore";
 import { extractApiError } from "@/utils/extractApiError";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Info, Loader, Trash } from "lucide-react";
+import { FileInput, Info, Loader, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
+import AttachmentList from "./components/AttachmentList";
+import AddAttachmentForm from "./forms/AddAttachmentForm";
 import {
   templatePatchSchema,
   type TemplatePatchFormValues,
 } from "./schemas/templatePatch.schema";
-import { type Template } from "./types/templates.type";
-import AppDialog from "@/components/ui/app-dialog";
-import { FormTextarea } from "@/components/ui/form-textarea";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { type Attachment, type Template } from "./types/templates.type";
 
 const ViewSingleTemplate = () => {
   const { templateId, slug } = useParams();
@@ -29,9 +31,12 @@ const ViewSingleTemplate = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [confirmSendTestDialogOpen, setConfirmSendTestDialogOpen] =
     useState(false);
+  const [addAttachmentDialogOpen, setAddAttachmentDialogOpen] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
+  const [userSubscriptionFound, setUserSubscriptionFound] = useState(false);
   const navigate = useNavigate();
-  
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+
   const { loading, subscribe, permission } = usePushNotifications();
 
   const fetchTemplateDetails = async () => {
@@ -49,6 +54,22 @@ const ViewSingleTemplate = () => {
   useEffect(() => {
     fetchTemplateDetails();
   }, [templateId]);
+
+  const fetchUserSubscription = async () => {
+    try {
+      const response = await apiClient.get(`/subscription/`);
+      if (response.status === 200) {
+        setUserSubscriptionFound(response.data.data.count !== 0);
+      }
+    } catch (error) {
+      const { code, message } = extractApiError(error);
+      showAlert(code.split("_").join(" "), message, "error");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserSubscription();
+  }, []);
 
   const methods = useForm<TemplatePatchFormValues>({
     resolver: zodResolver(templatePatchSchema),
@@ -147,7 +168,26 @@ const ViewSingleTemplate = () => {
     setConfirmSendTestDialogOpen(true);
   };
 
+  const fetchTemplateAttachments = async (templateId: string) => {
+    try {
+      const response = await apiClient.get(`/attachments/${templateId}/`);
+      if (response.status === 200) {
+        setAttachments(response.data.data.attachments);
+      }
+    } catch (error) {
+      const { code, message } = extractApiError(error);
+      showAlert(code.split("_").join(" "), message, "error");
+    }
+  };
+
+  useEffect(() => {
+    if (!template) return;
+    fetchTemplateAttachments(template?.id);
+  }, [template]);
+
   if (!template) return <Loader />;
+
+  const handleDeleteAttachment = (_attachmentId: string) => {};
 
   return (
     <PageContainer
@@ -162,14 +202,26 @@ const ViewSingleTemplate = () => {
         </Box>
       }
       action={
-        <Button
-          variant="destructive"
-          size="default"
-          onClick={() => setDeleteDialogOpen(true)}
-        >
-          <Trash className="w-6 h-6" />
-          Delete
-        </Button>
+        <Box className="flex gap-2">
+          {template.channel !== "push" && (
+            <Button
+              variant={"default"}
+              size={"default"}
+              onClick={() => setAddAttachmentDialogOpen(true)}
+            >
+              <FileInput className="w-6 h-6" />
+              Attach File
+            </Button>
+          )}
+          <Button
+            variant="destructive"
+            size="default"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            <Trash className="w-6 h-6" />
+            Delete
+          </Button>
+        </Box>
       }
     >
       <FormProvider methods={methods} onSubmit={onSubmit}>
@@ -195,6 +247,11 @@ const ViewSingleTemplate = () => {
           />
         )}
 
+        <AttachmentList
+          attachments={attachments}
+          onDelete={(attachmentId) => handleDeleteAttachment(attachmentId)}
+        />
+
         <Box className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={handleSendTestClick}>
             Send Test {template.channel === "email" ? "Email" : "Notification"}
@@ -202,7 +259,6 @@ const ViewSingleTemplate = () => {
           <Button type="submit">Submit</Button>
         </Box>
       </FormProvider>
-
       {/* Delete Dialog */}
       <AppDialog
         heading="Delete Template"
@@ -224,7 +280,23 @@ const ViewSingleTemplate = () => {
       >
         Are you sure you want to delete this template?
       </AppDialog>
-
+      {/* Add Attachment Dialog */}
+      <AppDialog
+        heading="Add Attachment"
+        open={addAttachmentDialogOpen}
+        onClose={() => setAddAttachmentDialogOpen(false)}
+      >
+        <AddAttachmentForm
+          templateId={template.id}
+          onSuccess={() => {
+            setAddAttachmentDialogOpen(false);
+            fetchTemplateAttachments(template.id)
+          }}
+          onCancel={() => {
+            setAddAttachmentDialogOpen(false);
+          }}
+        />
+      </AppDialog>
       {/* Send Test Dialog */}
       <AppDialog
         heading={`Send Test ${
@@ -268,7 +340,7 @@ const ViewSingleTemplate = () => {
           </p>
 
           {template.channel !== "email" && (
-            <>
+            <Box className="flex flex-col gap-2">
               {permission === "granted" && (
                 <Box className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-green-700">
                   <Info size={18} />
@@ -290,7 +362,24 @@ const ViewSingleTemplate = () => {
                   Notifications are blocked in your browser settings.
                 </Box>
               )}
-            </>
+
+              {!userSubscriptionFound && (
+                <Box className="flex items-center gap-3 rounded-md border border-red-200 bg-red-50 p-3 text-red-700">
+                  <Info size={18} />
+
+                  <span className="flex-1">Subscription not found.</span>
+
+                  <Button
+                    onClick={() => subscribe()}
+                    variant="outline"
+                    className="border-red-400 text-red-700 hover:bg-red-100 hover:text-red-800"
+                    disabled={loading}
+                  >
+                    {loading ? "Loading..." : "Subscribe"}
+                  </Button>
+                </Box>
+              )}
+            </Box>
           )}
         </Box>
       </AppDialog>

@@ -143,9 +143,9 @@ const ApiKeys = () => {
         <GenerateApiKeyForm
           onCancel={() => setCreateDialogOpen(false)}
           onSuccess={(apiKey: string) => {
-            getApiKeys();
-            setCreateDialogOpen(false);
             setRevealedKey(apiKey);
+            setCreateDialogOpen(false);
+            // getApiKeys();
           }}
         />
       </AppDialog>
@@ -159,9 +159,10 @@ const ApiKeys = () => {
           previousName={apiKey?.name ?? ""}
           onCancel={() => setRotateDialogOpen(false)}
           onSuccess={(apiKey: string) => {
-            getApiKeys();
-            setRotateDialogOpen(false);
+            console.log(apiKey)
             setRevealedKey(apiKey);
+            setRotateDialogOpen(false);
+            // getApiKeys();
           }}
         />
       </AppDialog>
