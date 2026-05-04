@@ -12,9 +12,10 @@ import ApiKeys from "./pages/apiKeys/ApiKeys";
 import LoginPage from "./pages/authentication/LoginPage";
 import SignupPage from "./pages/authentication/SignupPage";
 import Dashboard from "./pages/dashboard/Dashboard";
-import Templates from "./pages/templates/Templates";
-import ViewSingleTemplate from "./pages/templates/ViewSingleTemplate";
 import QueueBoard from "./pages/dashboard/QueueBoard";
+import Templates from "./pages/templates/Templates";
+import ViewEmailTemplate from "./pages/templates/ViewEmailTemplate";
+import ViewPushTemplate from "./pages/templates/ViewPushTemplate";
 
 const router = createBrowserRouter([
   {
@@ -23,37 +24,32 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <MainLayout />,
-        children: [
-          { index: true, element: <Dashboard /> },
-        ],
+        children: [{ index: true, element: <Dashboard /> }],
       },
       {
         path: "/queue-board/:channel",
         element: <MainLayout />,
-        children: [
-          { index: true, element: <QueueBoard /> },
-        ],
+        children: [{ index: true, element: <QueueBoard /> }],
       },
       {
         path: "/templates",
         element: <MainLayout />,
-        children: [
-          { index: true, element: <Templates /> },
-        ],
+        children: [{ index: true, element: <Templates /> }],
       },
       {
-        path: "/templates/:templateId/:slug",
+        path: "/templates/email/:templateId/:slug",
         element: <MainLayout />,
-        children: [
-          { index: true, element: <ViewSingleTemplate /> },
-        ],
+        children: [{ index: true, element: <ViewEmailTemplate /> }],
+      },
+      {
+        path: "/templates/push/:templateId/:slug",
+        element: <MainLayout />,
+        children: [{ index: true, element: <ViewPushTemplate /> }],
       },
       {
         path: "/api-keys",
         element: <MainLayout />,
-        children: [
-          { index: true, element: <ApiKeys /> },
-        ],
+        children: [{ index: true, element: <ApiKeys /> }],
       },
     ],
   },
@@ -88,7 +84,9 @@ function App() {
     };
 
     restoreSession();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [setAuth]);
 
   if (isRestoring) {

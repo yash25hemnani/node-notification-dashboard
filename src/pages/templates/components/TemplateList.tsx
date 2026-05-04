@@ -50,7 +50,7 @@ const TemplateList = ({
         <TemplateCard
           key={template.id}
           template={template}
-          onClick={() => navigate(`/templates/${template.id}/${template.slug}`)}
+          onClick={() => navigate(`/templates/${channel}/${template.id}/${template.slug}`)}
         />
       ))}
       {templates?.length === 0 && (

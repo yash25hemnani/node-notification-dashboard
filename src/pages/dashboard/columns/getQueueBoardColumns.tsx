@@ -55,7 +55,7 @@ export const getQueueBoardColumns = (
       label: "Queued At",
       render: (row) => (
         <span className="text-xs text-muted-foreground">
-          {new Date(row.createdAt).toLocaleDateString()}
+          {new Date(row.createdAt).toLocaleString()}
         </span>
       ),
     },
