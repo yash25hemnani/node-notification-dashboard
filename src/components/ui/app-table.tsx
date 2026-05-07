@@ -28,7 +28,7 @@ export function AppTable<T extends Record<string, any>>({
     <div className="rounded-xl border border-border overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/50 hover:bg-muted/50">
+          <TableRow className="bg-muted/50 hover:bg-muted/50 border-none">
             {columns.map((col) => (
               <TableHead
                 key={col.key}

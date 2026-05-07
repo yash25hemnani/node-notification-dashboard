@@ -14,7 +14,12 @@ export const getQueueBoardColumns = (
       key: "displayId",
       label: "ID",
       render: (row) => (
-        <span className="font-mono text-xs">{row.displayId ?? "—"}</span>
+        <a
+          href={`/notifications/${row.channel}/${row.displayId}/${row.id}`}
+          className="font-mono text-xs underline"
+        >
+          {row.displayId ?? "—"}
+        </a>
       ),
     },
     {

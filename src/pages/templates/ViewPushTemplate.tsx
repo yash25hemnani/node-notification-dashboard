@@ -12,9 +12,10 @@ import { useAlertStore } from "@/stores/alertStore";
 import { extractApiError } from "@/utils/extractApiError";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Info, Trash, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
+import { useForm, type UseFormReturn } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
+import Attributes from "./components/Attributes";
 import {
   templatePatchSchema,
   type TemplatePatchFormValues,
@@ -29,9 +30,13 @@ const ViewPushTemplate = () => {
   const [confirmSendTestDialogOpen, setConfirmSendTestDialogOpen] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [userSubscriptionFound, setUserSubscriptionFound] = useState(false);
+  const [attributeDrawerOpen, setAttributeDrawerOpen] = useState(false);
+  const [attributeList, setAttributeList] = useState<string[]>([]);
   const navigate = useNavigate();
 
   const { loading, subscribe, permission } = usePushNotifications();
+
+  const attributeFormRef = useRef<UseFormReturn<Record<string, string>> | null>(null);
 
   const fetchTemplateDetails = async () => {
     try {
@@ -45,8 +50,9 @@ const ViewPushTemplate = () => {
 
   const fetchUserSubscription = async () => {
     try {
-      const response = await apiClient.get(`/subscription/`);
-      if (response.status === 200) setUserSubscriptionFound(response.data.data.count !== 0);
+      const response = await apiClient.get(`/subscription/internal`);
+      if (response.status === 200)
+        setUserSubscriptionFound(response.data.data.count !== 0);
     } catch (error) {
       const { code, message } = extractApiError(error);
       showAlert(code.split("_").join(" "), message, "error");
@@ -61,12 +67,26 @@ const ViewPushTemplate = () => {
     defaultValues: { subject: "", body: "" },
   });
 
-  const { setValue, formState: { isDirty } } = methods;
+  const { setValue, watch, formState: { isDirty } } = methods;
 
   useEffect(() => {
     if (template?.subject) setValue("subject", template.subject);
     if (template?.body) setValue("body", template.body);
   }, [template]);
+
+  const watchedSubject = watch("subject");
+  const watchedBody = watch("body");
+
+  useEffect(() => {
+    const subjectMatches = [...(watchedSubject ?? "").matchAll(/{{(.*?)}}/g)];
+    const bodyMatches = [...(watchedBody ?? "").matchAll(/{{(.*?)}}/g)];
+
+    const values = [...subjectMatches, ...bodyMatches].map((m) => m[1].trim());
+    const uniqueAttributes: string[] = [...new Set(values)];
+
+    setAttributeList(uniqueAttributes);
+    setAttributeDrawerOpen(uniqueAttributes.length > 0);
+  }, [watchedSubject, watchedBody]);
 
   const onSubmit = async (data: TemplatePatchFormValues) => {
     try {
@@ -98,12 +118,17 @@ const ViewPushTemplate = () => {
   const handleSendTest = async () => {
     try {
       setTestLoading(true);
+      const data = attributeFormRef.current?.getValues() ?? {};
       const response = await apiClient.post("/notification/test/push", {
         templateSlug: template?.slug,
-        data: {},
+        data,
       });
       if (response.status === 201) {
-        showAlert("SUCCESS", "Test notification queued! See Notification tab for details", "success");
+        showAlert(
+          "SUCCESS",
+          "Test notification queued! See Notification tab for details",
+          "success",
+        );
         setConfirmSendTestDialogOpen(false);
       }
     } catch (error) {
@@ -131,24 +156,23 @@ const ViewPushTemplate = () => {
   return (
     <PageContainer
       heading={
-        <Box className="flex items-center gap-2.5">
-          <span className="font-semibold text-foreground">{slug}</span>
-          <Badge variant="default" className="text-xs capitalize rounded-md px-2">
+        <Box className="flex justify-center items-center gap-2">
+          {slug}
+          <Badge variant="default" className="text-xs capitalize">
             push
           </Badge>
         </Box>
       }
       action={
-        <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-          <Trash size={14} />
+        <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+          <Trash className="w-6 h-6" />
           Delete
         </Button>
       }
     >
-      {/* ── Main Editor ─────────────────────────────────── */}
-      <Box className="max-w-2xl space-y-4">
-        <FormProvider methods={methods} onSubmit={onSubmit}>
-          <Box className="rounded-xl border bg-card p-5 space-y-4">
+      <Box className="flex gap-6">
+        <Box className="flex-1 min-w-0">
+          <FormProvider methods={methods} onSubmit={onSubmit}>
             <FormInput
               name="subject"
               label="Title"
@@ -159,17 +183,28 @@ const ViewPushTemplate = () => {
               label="Message"
               placeholder="Enter push notification message..."
             />
-          </Box>
 
-          <Box className="flex justify-end items-center gap-2 pt-1">
-            <Button type="button" variant="outline" size="sm" onClick={handleSendTestClick}>
-              Send Test Notification
-            </Button>
-            <Button type="submit" size="sm">
-              Save Changes
-            </Button>
+            <Box className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSendTestClick}
+              >
+                Send Test Notification
+              </Button>
+              <Button type="submit">Save</Button>
+            </Box>
+          </FormProvider>
+        </Box>
+
+        {attributeDrawerOpen && (
+          <Box className="w-108 border border-zinc-800 rounded-xl shrink-0 p-2 h-full">
+            <Attributes
+              attributeList={attributeList}
+              formRef={attributeFormRef}
+            />
           </Box>
-        </FormProvider>
+        )}
       </Box>
 
       {/* Delete Dialog */}
@@ -179,8 +214,12 @@ const ViewPushTemplate = () => {
         onClose={() => setDeleteDialogOpen(false)}
         action={
           <>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
           </>
         }
       >
@@ -194,7 +233,10 @@ const ViewPushTemplate = () => {
         onClose={() => setConfirmSendTestDialogOpen(false)}
         action={
           <>
-            <Button variant="outline" onClick={() => setConfirmSendTestDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmSendTestDialogOpen(false)}
+            >
               Cancel
             </Button>
             {permission === "default" && (
@@ -219,7 +261,6 @@ const ViewPushTemplate = () => {
           </p>
 
           <Box className="flex flex-col gap-2">
-            {/* Permission status */}
             {permission === "granted" && (
               <Box className="flex items-center gap-2.5 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 text-sm text-green-700">
                 <CheckCircle2 size={15} className="shrink-0" />
@@ -239,7 +280,6 @@ const ViewPushTemplate = () => {
               </Box>
             )}
 
-            {/* Subscription status */}
             {!userSubscriptionFound && (
               <Box className="flex items-center gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
                 <XCircle size={15} className="shrink-0" />

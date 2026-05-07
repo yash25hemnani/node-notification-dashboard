@@ -66,6 +66,7 @@ const AppSidebar = ({
       collapsible="icon"
       onMouseEnter={() => setOpenSidebar(true)}
       onMouseLeave={() => setOpenSidebar(false)}
+      className="border-none"
     >
       <SidebarHeader />
 

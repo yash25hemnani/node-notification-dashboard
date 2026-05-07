@@ -247,7 +247,7 @@ const ViewEmailTemplate = () => {
         </Box>
 
         {attributeDrawerOpen && (
-          <Box className="w-108 border rounded-xl shrink-0 p-2 h-full">
+          <Box className="w-108 border border-zinc-800 rounded-xl shrink-0 p-2 h-full">
             <Attributes
               attributeList={attributeList}
               formRef={attributeFormRef}

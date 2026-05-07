@@ -23,7 +23,7 @@ const StatCard = ({
     <Card
       className="flex-1 hover:cursor-pointer"
       onClick={() =>
-        navigate(`/queue-board/${channel}/?state=${label.toLowerCase()}`)
+        navigate(`/notifications/${channel}/?state=${label.toLowerCase()}`)
       }
     >
       <CardContent className="py-4 px-5">
@@ -48,7 +48,7 @@ const QueueSection = ({
     <Box className="flex flex-col gap-3">
       <h3
         className="text-sm font-medium text-foreground capitalize hover:cursor-pointer"
-        onClick={() => navigate(`/queue-board/${channel}`)}
+        onClick={() => navigate(`/notifications/${channel}`)}
       >
         {title} Queue
       </h3>

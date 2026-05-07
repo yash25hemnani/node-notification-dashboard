@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     -------------------------- */
 
   setAccessToken: (token) => {
-    localStorage.setItem("access_token", token);
+    localStorage.setItem("accessToken", token);
 
     set((state) => ({
       accessToken: token,

@@ -9,8 +9,8 @@ import { useAlertStore } from "@/stores/alertStore";
 import { extractApiError } from "@/utils/extractApiError";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getQueueBoardColumns } from "./columns/getQueueBoardColumns";
-import type { Job } from "./types/dashboard.type";
+import { getQueueBoardColumns } from "../dashboard/columns/getQueueBoardColumns";
+import type { Job } from "../dashboard/types/dashboard.type";
 import AppDialog from "@/components/ui/app-dialog";
 
 const isDev = import.meta.env.MODE === "development";
@@ -105,7 +105,7 @@ const JobList = ({ channel, state }: { channel: string; state: string }) => {
   );
 };
 
-const QueueBoard = () => {
+const AllNotifications = () => {
   const { channel = "email" } = useParams();
 
   const tabs = [
@@ -145,4 +145,4 @@ const QueueBoard = () => {
   );
 };
 
-export default QueueBoard;
+export default AllNotifications;

@@ -29,13 +29,9 @@ const LoginForm = () => {
     try {
       const response = await apiClient.post("/auth/login/", data);
       
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         const data = response.data.data;
-        console.log(response.data)
-        
-        if (data) {
-          setAuth(data.accessToken, data.user)
-        }
+        setAuth(data.accessToken, data.user) 
         
         showAlert(
           "Login successful",

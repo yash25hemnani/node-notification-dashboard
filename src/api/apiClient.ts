@@ -80,8 +80,10 @@ apiClient.interceptors.response.use(
         { withCredentials: true }
       );
 
-      const newToken: string = res.data.access;
+      const newToken: string = res.data.accessToken;
       useAuthStore.getState().setAccessToken(newToken);
+
+      console.log(newToken)
 
       // Resolve all queued requests with the new token
       processQueue(null, newToken);
