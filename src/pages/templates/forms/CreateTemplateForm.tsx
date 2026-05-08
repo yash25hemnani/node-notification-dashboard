@@ -45,7 +45,10 @@ const CreateTemplateForm = () => {
           "success",
         );
 
-        navigate("/templates");
+        if (response.data.data) {
+          const templateData = response.data.data.template;
+          navigate(`/templates/${templateData.channel}/${templateData.id}/${templateData.slug}`)
+        }
       }
     } catch (error: any) {
       const { code, message } = extractApiError(error);

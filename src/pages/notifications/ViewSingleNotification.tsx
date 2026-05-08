@@ -8,6 +8,11 @@ import { renderTemplate } from "@/utils/renderTemplate";
 import { Globe } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import SentAttachmentList from "./components/SentAttachmentsList";
+import { SideRow } from "./components/SideRow";
+import type { BullMQJob } from "./types/job.types";
+import type { Notification } from "./types/notification.types";
+import { JobDetailsSection } from "./components/JobDetailsSection";
 
 const STATUS_STYLES: Record<string, string> = {
   completed: "bg-green-50 border-green-200 text-green-700",
@@ -19,22 +24,41 @@ const STATUS_STYLES: Record<string, string> = {
 const ViewSingleNotification = () => {
   const { displayId, id } = useParams();
   const showAlert = useAlertStore((s) => s.showAlert);
-  const [notification, setNotification] = useState<any>(null);
+  const [notification, setNotification] = useState<Notification | null>(null);
+  const [jobData, setJobData] = useState<BullMQJob | null>(null)
+
+  const fetchNotificationData = async () => {
+    try {
+      const response = await apiClient.get(`/notification/${id}`);
+      if (response.status === 200)
+        setNotification(response.data.data.notification);
+    } catch (error) {
+      const { code, message } = extractApiError(error);
+      showAlert(code.split("_").join(" "), message, "error");
+    }
+  };
+
+  const fetchJobData = async (channel: string, jobId: string) => {
+
+    try {
+      const response = await apiClient.get(`/jobs/${channel}/${jobId}`);
+      if (response.status === 200)
+        setJobData(response.data.data.job);
+    } catch (error) {
+      const { code, message } = extractApiError(error);
+      showAlert(code.split("_").join(" "), message, "error");
+    }
+  };
 
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const response = await apiClient.get(`/notification/${id}`);
-        if (response.status === 200)
-          setNotification(response.data.data.notification);
-      } catch (error) {
-        const { code, message } = extractApiError(error);
-        showAlert(code.split("_").join(" "), message, "error");
-      }
-    };
-    fetch();
+    fetchNotificationData();
   }, [id]);
 
+  useEffect(() => {
+    if (!notification) return
+    fetchJobData(notification.channel, notification.jobId)
+  }, [notification])
+  
   if (!notification) return null;
 
   const data = notification.data ?? {};
@@ -70,78 +94,81 @@ const ViewSingleNotification = () => {
       }
     >
       <Box className="flex gap-5 items-start">
-        {/* ── Left: Seamless sidebar ───────────────────── */}
-        <Box className="w-90 shrink-0 rounded-xl border bg-card overflow-hidden">
-          <Box className="p-3.5 border-b">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-2.5">
-              General
-            </p>
-            <Box className="flex flex-col gap-2">
-              <SideRow label="Template" value={notification.templateSlug} />
-              <SideRow label="Customer" value={notification.customerEmail} />
-              <SideRow label="Recipient" value={notification.recipient} />
-              <SideRow
-                label="Sent"
-                value={new Date(notification.createdAt).toLocaleString()}
-              />
-              <SideRow
-                label="Attempts"
-                value={String(notification.attemptsMade ?? 0)}
-              />
-              {notification.failedReason && (
-                <SideRow
-                  label="Failed"
-                  value={notification.failedReason}
-                  valueClassName="text-red-600"
-                />
-              )}
-            </Box>
-          </Box>
-
-          {isEmail && emailDetail && (
+        <Box className="space-y-2">
+          <Box className="w-90 shrink-0 rounded-xl border bg-card overflow-hidden">
             <Box className="p-3.5 border-b">
               <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-2.5">
-                Recipients
+                General
               </p>
               <Box className="flex flex-col gap-2">
-                {emailDetail.to?.length > 0 && (
-                  <SideRow label="To" value={emailDetail.to.join(", ")} />
-                )}
-                {emailDetail.cc?.length > 0 && (
-                  <SideRow label="CC" value={emailDetail.cc.join(", ")} />
-                )}
-                {emailDetail.bcc?.length > 0 && (
-                  <SideRow label="BCC" value={emailDetail.bcc.join(", ")} />
-                )}
-                {emailDetail.replyTo && (
-                  <SideRow label="Reply To" value={emailDetail.replyTo} />
+                <SideRow label="Template" value={notification.templateSlug} />
+                <SideRow label="Customer" value={notification.customerEmail} />
+                <SideRow label="Recipient" value={notification.recipient} />
+                <SideRow
+                  label="Sent"
+                  value={new Date(notification.createdAt).toLocaleString()}
+                />
+                <SideRow
+                  label="Attempts"
+                  value={String(notification.attemptsMade ?? 0)}
+                />
+                {notification.failedReason && (
+                  <SideRow
+                    label="Failed"
+                    value={notification.failedReason}
+                    valueClassName="text-red-600"
+                  />
                 )}
               </Box>
             </Box>
-          )}
 
-          {Object.keys(data).length > 0 && (
-            <Box className="p-3.5">
-              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-2.5">
-                Injected Data
-              </p>
-              <Box className="flex flex-col gap-2">
-                {Object.entries(data).map(([key, val]) => (
-                  <Box
-                    key={key}
-                    className="flex items-center justify-between gap-2"
-                  >
-                    <span className="text-[11px] font-mono text-muted-foreground">
-                      {key}
-                    </span>
-                    <span className="text-[11px] font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">
-                      {String(val)}
-                    </span>
-                  </Box>
-                ))}
+            {isEmail && emailDetail && (
+              <Box className="p-3.5 border-b">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-2.5">
+                  Recipients
+                </p>
+                <Box className="flex flex-col gap-2">
+                  {emailDetail.to?.length > 0 && (
+                    <SideRow label="To" value={emailDetail.to.join(", ")} />
+                  )}
+                  {emailDetail.cc?.length > 0 && (
+                    <SideRow label="CC" value={emailDetail.cc.join(", ")} />
+                  )}
+                  {emailDetail.bcc?.length > 0 && (
+                    <SideRow label="BCC" value={emailDetail.bcc.join(", ")} />
+                  )}
+                  {emailDetail.replyTo && (
+                    <SideRow label="Reply To" value={emailDetail.replyTo} />
+                  )}
+                </Box>
               </Box>
-            </Box>
-          )}
+            )}
+
+            {Object.keys(data).length > 0 && (
+              <Box className="p-3.5">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-2.5">
+                  Injected Data
+                </p>
+                <Box className="flex flex-col gap-2">
+                  {Object.entries(data).map(([key, val]) => (
+                    <Box
+                      key={key}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <span className="text-[11px] font-mono text-muted-foreground">
+                        {key}
+                      </span>
+                      <span className="text-[11px] font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">
+                        {String(val)}
+                      </span>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </Box>
+           
+           {jobData && <JobDetailsSection job={jobData}/>}
         </Box>
 
         {/* ── Right: Preview ───── */}
@@ -158,27 +185,87 @@ const ViewSingleNotification = () => {
                   Email Preview
                 </span>
               </Box>
-              <Box className="px-7 py-6">
-                {renderedSubject && (
-                  <p className="text-lg font-semibold text-foreground mb-1.5">
-                    {renderedSubject}
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground pb-4 mb-5 border-b">
-                  From: no-reply@yourapp.com &nbsp;&bull;&nbsp; To:{" "}
-                  {emailDetail?.to?.join(", ")}
-                </p>
-                {renderedBody ? (
-                  <Box
-                    className="prose prose-sm max-w-none text-foreground"
-                    dangerouslySetInnerHTML={{ __html: renderedBody }}
-                  />
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No body content.
-                  </p>
-                )}
+              <Box className="border rounded-xl overflow-hidden bg-background">
+                {/* ── Header Fields ─────────────────────────────── */}
+                <Box className="divide-y border-b">
+                  <Box className="border-none flex items-center gap-3 px-5 py-3">
+                    <span className="text-sm text-muted-foreground w-10 shrink-0">
+                      From
+                    </span>
+                    <span className="text-sm text-foreground">
+                      no-reply@yourapp.com
+                    </span>
+                  </Box>
+
+                  {emailDetail?.to?.length > 0 && (
+                    <Box className="border-none flex items-center gap-3 px-5 py-3">
+                      <span className="text-sm text-muted-foreground w-10 shrink-0">
+                        To
+                      </span>
+                      <span className="text-sm text-foreground">
+                        {emailDetail.to.join(", ")}
+                      </span>
+                    </Box>
+                  )}
+
+                  {emailDetail?.cc?.length > 0 && (
+                    <Box className="border-none flex items-center gap-3 px-5 py-3">
+                      <span className="text-sm text-muted-foreground w-10 shrink-0">
+                        Cc
+                      </span>
+                      <span className="text-sm text-foreground">
+                        {emailDetail.cc.join(", ")}
+                      </span>
+                    </Box>
+                  )}
+
+                  {emailDetail?.bcc?.length > 0 && (
+                    <Box className="flex items-center gap-3 px-5 py-3">
+                      <span className="text-sm text-muted-foreground w-10 shrink-0">
+                        Bcc
+                      </span>
+                      <span className="text-sm text-foreground">
+                        {emailDetail.bcc.join(", ")}
+                      </span>
+                    </Box>
+                  )}
+
+                  {renderedSubject && (
+                    <Box className="flex items-center gap-3 px-5 py-3">
+                      <span className="text-sm font-medium text-foreground">
+                        {renderedSubject}
+                      </span>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* ── Email Body ─────────────────────────────────── */}
+                <Box className="px-5 py-5">
+                  {renderedBody ? (
+                    <Box
+                      className="prose prose-sm max-w-none text-foreground"
+                      dangerouslySetInnerHTML={{ __html: renderedBody }}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No body content.
+                    </p>
+                  )}
+                </Box>
               </Box>
+              {/* Attachments sent with the mail */}
+              {(snapshot.attachments?.length > 0 ||
+                notification.files?.length > 0) && (
+                <Box className="p-3.5 border-b">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-2.5">
+                    Attachments
+                  </p>
+                  <SentAttachmentList
+                    templateAttachments={snapshot.attachments}
+                    files={notification.files}
+                  />
+                </Box>
+              )}
             </Box>
           ) : (
             <Box className="w-full border-2 border-dashed border-border rounded-xl bg-muted/30 min-h-80 flex items-center justify-center">
@@ -203,24 +290,5 @@ const ViewSingleNotification = () => {
     </PageContainer>
   );
 };
-
-const SideRow = ({
-  label,
-  value,
-  valueClassName = "",
-}: {
-  label: string;
-  value: string;
-  valueClassName?: string;
-}) => (
-  <Box className="flex justify-between items-baseline gap-2">
-    <span className="text-[12px] text-muted-foreground shrink-0">{label}</span>
-    <span
-      className={`text-[12px] text-foreground font-medium text-right break-all ${valueClassName}`}
-    >
-      {value}
-    </span>
-  </Box>
-);
 
 export default ViewSingleNotification;
