@@ -1,15 +1,10 @@
-// hooks/usePushNotifications.ts
 import apiClient from "@/api/apiClient";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 function urlBase64ToUint8Array(base64String: string) {
-  console.log(base64String)
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-
   const rawData = window.atob(base64);
-
   return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 
@@ -22,27 +17,29 @@ export function usePushNotifications() {
   const [loading, setLoading] = useState(false);
   const [permission, setPermission] = useState(getPermission());
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [endpoint, setEndpoint] = useState<string | null>(null);
 
-  useEffect(() => {
-    const checkSubscription = async () => {
-      if ("serviceWorker" in navigator && "pushManager" in window) {
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.getSubscription();
-          setIsSubscribed(!!subscription);
-        } catch (error) {
-          console.error("Error checking subscription:", error);
-        }
+  const checkSubscription = async () => {
+    console.log("Trying here...")
+    console.log("serviceWorker" in navigator && "pushManager" in window)
+    if ("serviceWorker" in navigator && "pushManager" in window) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        console.log(registration, subscription)
+        setIsSubscribed(!!subscription);
+        setEndpoint(subscription?.endpoint || null);
+      } catch (error) {
+        console.error("Error checking subscription:", error);
       }
-    };
-    checkSubscription();
-  }, []);
+    }
+  };
 
   const subscribe = async () => {
     try {
       setLoading(true);
       const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-  
+
       if (!VAPID_PUBLIC_KEY) {
         throw new Error("VAPID public key is not defined.");
       }
@@ -59,9 +56,7 @@ export function usePushNotifications() {
       }
 
       const registration = await navigator.serviceWorker.ready;
-
-      const existingSubscription =
-        await registration.pushManager.getSubscription();
+      const existingSubscription = await registration.pushManager.getSubscription();
 
       if (existingSubscription) {
         await existingSubscription.unsubscribe();
@@ -71,9 +66,8 @@ export function usePushNotifications() {
             endpoint: existingSubscription.endpoint,
           });
         } catch (error: any) {
-          // Subscription not found on server
           if (error?.response?.status !== 404) {
-            throw error; // re-throw anything unexpected
+            throw error;
           }
         }
         setIsSubscribed(false);
@@ -89,6 +83,7 @@ export function usePushNotifications() {
       });
 
       setIsSubscribed(true);
+      setEndpoint(subscription.endpoint);
 
       return true;
     } catch (error) {
@@ -104,5 +99,7 @@ export function usePushNotifications() {
     loading,
     permission,
     isSubscribed,
+    endpoint,
+    refetchSubscription: checkSubscription,
   };
 }

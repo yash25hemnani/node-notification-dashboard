@@ -35,7 +35,9 @@ const ViewPushTemplate = () => {
   const [attributeList, setAttributeList] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  const { loading, subscribe, permission } = usePushNotifications();
+  const { loading, subscribe, permission, endpoint, refetchSubscription } =
+    usePushNotifications();
+
 
   const attributeFormRef = useRef<UseFormReturn<Record<string, string>> | null>(
     null,
@@ -53,9 +55,12 @@ const ViewPushTemplate = () => {
 
   const fetchUserSubscription = async () => {
     try {
-      const response = await apiClient.get(`/subscription/internal`);
+      if (!endpoint) return;
+      const response = await apiClient.get(
+        `/subscription/internal?endpoint=${encodeURIComponent(endpoint)}`,
+      );
       if (response.status === 200)
-        setUserSubscriptionFound(response.data.data.count !== 0);
+        setUserSubscriptionFound(!!response.data.data.subscription);
     } catch (error) {
       const { code, message } = extractApiError(error);
       showAlert(code.split("_").join(" "), message, "error");
@@ -65,10 +70,33 @@ const ViewPushTemplate = () => {
   useEffect(() => {
     fetchTemplateDetails();
   }, [templateId]);
-  
+
   useEffect(() => {
-    fetchUserSubscription();
-  }, []);
+    if (endpoint) {
+      fetchUserSubscription();
+    }
+  }, [endpoint]);
+
+  useEffect(() => {
+    console.log("Trying to refetch")
+    refetchSubscription();
+  }, [])
+  
+
+  // Re-check subscription every time the dialog opens
+  useEffect(() => {
+    if (confirmSendTestDialogOpen && endpoint) {
+      fetchUserSubscription();
+    }
+  }, [confirmSendTestDialogOpen, endpoint]);
+
+  const handleSubscribe = async () => {
+    const success = await subscribe();
+    if (success) {
+      await refetchSubscription();
+      await fetchUserSubscription();
+    }
+  };
 
   const methods = useForm<TemplatePatchFormValues>({
     resolver: zodResolver(templatePatchSchema),
@@ -262,15 +290,24 @@ const ViewPushTemplate = () => {
             >
               Cancel
             </Button>
+
             {permission === "default" && (
-              <Button onClick={subscribe} disabled={loading}>
+              <Button onClick={handleSubscribe} disabled={loading}>
                 {loading ? "Enabling..." : "Enable Notifications First"}
               </Button>
             )}
+
             {permission === "denied" && (
               <Button disabled>Notifications Blocked</Button>
             )}
-            {permission === "granted" && (
+
+            {permission === "granted" && !userSubscriptionFound && (
+              <Button onClick={handleSubscribe} disabled={loading}>
+                {loading ? "Subscribing..." : "Subscribe to Send"}
+              </Button>
+            )}
+
+            {permission === "granted" && userSubscriptionFound && (
               <Button onClick={handleSendTest} disabled={testLoading}>
                 {testLoading ? "Sending..." : "Send"}
               </Button>
@@ -311,7 +348,7 @@ const ViewPushTemplate = () => {
                   No subscription found for this device.
                 </span>
                 <Button
-                  onClick={() => subscribe()}
+                  onClick={handleSubscribe}
                   variant="outline"
                   size="sm"
                   className="border-red-300 text-red-700 hover:bg-red-100 hover:text-red-800 shrink-0"
