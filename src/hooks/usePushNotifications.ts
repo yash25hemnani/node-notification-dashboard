@@ -20,9 +20,7 @@ export function usePushNotifications() {
   const [endpoint, setEndpoint] = useState<string | null>(null);
 
   const checkSubscription = async () => {
-    console.log("Trying here...")
-    console.log("serviceWorker" in navigator && "pushManager" in window)
-    if ("serviceWorker" in navigator && "pushManager" in window) {
+    if ("serviceWorker" in navigator && "PushManager" in window) {
       try {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
@@ -77,6 +75,8 @@ export function usePushNotifications() {
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
+
+      console.log(subscription)
 
       await apiClient.post("/subscription/internal-subscribe", {
         subscription,
