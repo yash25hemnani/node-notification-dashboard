@@ -17,6 +17,8 @@ jobs:
         run: npm install
       - name: Build project
         run: npm run build
+        env:
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
       - name: Deploy to Server
         uses: appleboy/scp-action@v0.1.7
         with:
