@@ -2,8 +2,6 @@
 import apiClient from "@/api/apiClient";
 import { useState } from "react";
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
 
@@ -25,7 +23,9 @@ export function usePushNotifications() {
 
   const subscribe = async () => {
     try {
+      
       setLoading(true);
+      const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
       if (!("Notification" in window)) {
         throw new Error("Notifications are not supported.");
