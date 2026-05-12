@@ -3,6 +3,7 @@ import apiClient from "@/api/apiClient";
 import { useState } from "react";
 
 function urlBase64ToUint8Array(base64String: string) {
+  console.log(base64String)
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
 
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -23,9 +24,13 @@ export function usePushNotifications() {
 
   const subscribe = async () => {
     try {
-      
       setLoading(true);
       const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+      console.log(VAPID_PUBLIC_KEY)
+
+      if (!VAPID_PUBLIC_KEY) {
+        throw new Error("VAPID public key is not defined.");
+      }
 
       if (!("Notification" in window)) {
         throw new Error("Notifications are not supported.");
@@ -45,9 +50,17 @@ export function usePushNotifications() {
 
       if (existingSubscription) {
         await existingSubscription.unsubscribe();
-        await apiClient.post("/subscription/internal-unsubscribe", {
-          endpoint: existingSubscription.endpoint,
-        });
+
+        try {
+          await apiClient.post("/subscription/internal-unsubscribe", {
+            endpoint: existingSubscription.endpoint,
+          });
+        } catch (error: any) {
+          // Subscription not found on server — that's fine, continue
+          if (error?.response?.status !== 404) {
+            throw error; // re-throw anything unexpected
+          }
+        }
       }
 
       const subscription = await registration.pushManager.subscribe({
