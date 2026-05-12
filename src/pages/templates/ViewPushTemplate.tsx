@@ -29,12 +29,11 @@ const ViewPushTemplate = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [confirmSendTestDialogOpen, setConfirmSendTestDialogOpen] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [userSubscriptionFound, setUserSubscriptionFound] = useState(false);
   const [attributeDrawerOpen, setAttributeDrawerOpen] = useState(false);
   const [attributeList, setAttributeList] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  const { loading, subscribe, permission } = usePushNotifications();
+  const { loading, subscribe, permission, isSubscribed } = usePushNotifications();
 
   const attributeFormRef = useRef<UseFormReturn<Record<string, string>> | null>(null);
 
@@ -48,19 +47,7 @@ const ViewPushTemplate = () => {
     }
   };
 
-  const fetchUserSubscription = async () => {
-    try {
-      const response = await apiClient.get(`/subscription/internal`);
-      if (response.status === 200)
-        setUserSubscriptionFound(response.data.data.count !== 0);
-    } catch (error) {
-      const { code, message } = extractApiError(error);
-      showAlert(code.split("_").join(" "), message, "error");
-    }
-  };
-
   useEffect(() => { fetchTemplateDetails(); }, [templateId]);
-  useEffect(() => { fetchUserSubscription(); }, []);
 
   const methods = useForm<TemplatePatchFormValues>({
     resolver: zodResolver(templatePatchSchema),
@@ -280,7 +267,7 @@ const ViewPushTemplate = () => {
               </Box>
             )}
 
-            {!userSubscriptionFound && (
+            {!isSubscribed && (
               <Box className="flex items-center gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
                 <XCircle size={15} className="shrink-0" />
                 <span className="flex-1">No subscription found for this device.</span>

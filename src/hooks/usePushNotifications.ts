@@ -1,6 +1,6 @@
 // hooks/usePushNotifications.ts
 import apiClient from "@/api/apiClient";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function urlBase64ToUint8Array(base64String: string) {
   console.log(base64String)
@@ -21,13 +21,28 @@ const getPermission = (): NotificationPermission | "unsupported" => {
 export function usePushNotifications() {
   const [loading, setLoading] = useState(false);
   const [permission, setPermission] = useState(getPermission());
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if ("serviceWorker" in navigator && "pushManager" in window) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.getSubscription();
+          setIsSubscribed(!!subscription);
+        } catch (error) {
+          console.error("Error checking subscription:", error);
+        }
+      }
+    };
+    checkSubscription();
+  }, []);
 
   const subscribe = async () => {
     try {
       setLoading(true);
       const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-      console.log(VAPID_PUBLIC_KEY)
-
+  
       if (!VAPID_PUBLIC_KEY) {
         throw new Error("VAPID public key is not defined.");
       }
@@ -56,11 +71,12 @@ export function usePushNotifications() {
             endpoint: existingSubscription.endpoint,
           });
         } catch (error: any) {
-          // Subscription not found on server — that's fine, continue
+          // Subscription not found on server
           if (error?.response?.status !== 404) {
             throw error; // re-throw anything unexpected
           }
         }
+        setIsSubscribed(false);
       }
 
       const subscription = await registration.pushManager.subscribe({
@@ -71,6 +87,8 @@ export function usePushNotifications() {
       await apiClient.post("/subscription/internal-subscribe", {
         subscription,
       });
+
+      setIsSubscribed(true);
 
       return true;
     } catch (error) {
@@ -85,5 +103,6 @@ export function usePushNotifications() {
     subscribe,
     loading,
     permission,
+    isSubscribed,
   };
 }
