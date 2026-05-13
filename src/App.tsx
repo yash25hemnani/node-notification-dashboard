@@ -22,75 +22,81 @@ export const App = () => {
   const [isRestoring, setIsRestoring] = useState(true);
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const router = useMemo(() => createBrowserRouter([
-    {
-      element: <ProtectedRoute />,
-      children: [
+  const router = useMemo(
+    () =>
+      createBrowserRouter([
         {
-          path: "/",
-          element: <MainLayout />,
-          children: [{ index: true, element: <Dashboard /> }],
+          element: <ProtectedRoute />,
+          children: [
+            {
+              path: "/",
+              element: <MainLayout />,
+              children: [{ index: true, element: <Dashboard /> }],
+            },
+            {
+              path: "/notifications/:channel",
+              element: <MainLayout />,
+              children: [{ index: true, element: <AllNotifications /> }],
+            },
+            {
+              path: "/notifications/:channel/:displayId/:id",
+              element: <MainLayout />,
+              children: [{ index: true, element: <ViewSingleNotification /> }],
+            },
+            {
+              path: "/templates",
+              element: <MainLayout />,
+              children: [{ index: true, element: <Templates /> }],
+            },
+            {
+              path: "/templates/email/:templateId/:slug",
+              element: <MainLayout />,
+              children: [{ index: true, element: <ViewEmailTemplate /> }],
+            },
+            {
+              path: "/templates/push/:templateId/:slug",
+              element: <MainLayout />,
+              children: [{ index: true, element: <ViewPushTemplate /> }],
+            },
+            {
+              path: "/api-keys",
+              element: <MainLayout />,
+              children: [{ index: true, element: <ApiKeys /> }],
+            },
+          ],
         },
         {
-          path: "/notifications/:channel",
-          element: <MainLayout />,
-          children: [{ index: true, element: <AllNotifications /> }],
+          element: <GuestGuard />,
+          children: [
+            { path: "/login", element: <LoginPage /> },
+            { path: "/signup", element: <SignupPage /> },
+          ],
         },
-        {
-          path: "/notifications/:channel/:displayId/:id",
-          element: <MainLayout />,
-          children: [{ index: true, element: <ViewSingleNotification /> }],
-        },
-        {
-          path: "/templates",
-          element: <MainLayout />,
-          children: [{ index: true, element: <Templates /> }],
-        },
-        {
-          path: "/templates/email/:templateId/:slug",
-          element: <MainLayout />,
-          children: [{ index: true, element: <ViewEmailTemplate /> }],
-        },
-        {
-          path: "/templates/push/:templateId/:slug",
-          element: <MainLayout />,
-          children: [{ index: true, element: <ViewPushTemplate /> }],
-        },
-        {
-          path: "/api-keys",
-          element: <MainLayout />,
-          children: [{ index: true, element: <ApiKeys /> }],
-        },
-      ],
-    },
-    {
-      element: <GuestGuard />,
-      children: [
-        { path: "/login", element: <LoginPage /> },
-        { path: "/signup", element: <SignupPage /> },
-      ],
-    },
-  ]), []);
+      ]),
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
 
     const restoreSession = async () => {
       try {
-        const refreshRes = await apiClient.post("/auth/refresh/");
+        const refreshRes = await apiClient.get("/auth/refresh/");
         if (refreshRes.status === 200 && !cancelled) {
           const { user, accessToken } = refreshRes.data.data;
           setAuth(accessToken, user);
         }
       } catch {
-        // no valid session — that's fine
+        // no valid session
       } finally {
         if (!cancelled) setIsRestoring(false);
       }
     };
 
     restoreSession();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [setAuth]);
 
   if (isRestoring) {
@@ -103,4 +109,4 @@ export const App = () => {
   }
 
   return <RouterProvider router={router} />;
-}
+};
