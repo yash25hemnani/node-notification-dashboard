@@ -1,5 +1,5 @@
 import apiClient from "@/api/apiClient";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -19,12 +19,29 @@ export function usePushNotifications() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [endpoint, setEndpoint] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!navigator.serviceWorker) return;
+
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "PLAY_SOUND") {
+        const audio = new Audio("/sound.wav");
+        audio.play().catch((err) => console.log("Audio error:", err));
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", handler);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handler);
+    };
+  }, []);
+
   const checkSubscription = async () => {
     if ("serviceWorker" in navigator && "PushManager" in window) {
       try {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
-        console.log(registration, subscription)
+        console.log(registration, subscription);
         setIsSubscribed(!!subscription);
         setEndpoint(subscription?.endpoint || null);
       } catch (error) {
@@ -54,7 +71,8 @@ export function usePushNotifications() {
       }
 
       const registration = await navigator.serviceWorker.ready;
-      const existingSubscription = await registration.pushManager.getSubscription();
+      const existingSubscription =
+        await registration.pushManager.getSubscription();
 
       if (existingSubscription) {
         await existingSubscription.unsubscribe();
@@ -76,7 +94,7 @@ export function usePushNotifications() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
-      console.log(subscription)
+      console.log(subscription);
 
       await apiClient.post("/subscription/internal-subscribe", {
         subscription,
