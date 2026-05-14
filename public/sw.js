@@ -9,3 +9,9 @@ self.addEventListener("push", (event) => {
     })
   );
 });
+
+// In your main JS (when tab is open)
+navigator.serviceWorker.addEventListener('message', () => {
+  const audio = new Audio('/sound.wav');
+  audio.play();
+});
