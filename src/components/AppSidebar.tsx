@@ -8,7 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
 
@@ -16,7 +16,7 @@ import apiClient from "@/api/apiClient";
 import { useAlertStore } from "@/stores/alertStore";
 import { useAuthStore } from "@/stores/authStore";
 import { extractApiError } from "@/utils/extractApiError";
-import { Home, KeySquare, LayoutTemplate, LogOut } from "lucide-react";
+import { Home, KeySquare, LayoutTemplate, LogOut, UserCheck } from "lucide-react";
 import { Box } from "./ui/box";
 import { Button } from "./ui/button";
 
@@ -24,6 +24,12 @@ const navItems = [
   { to: "/", icon: Home, label: "Dashboard" },
   { to: "/templates", icon: LayoutTemplate, label: "Templates" },
   { to: "/api-keys", icon: KeySquare, label: "API Keys" },
+  {
+    to: "/subscriptions",
+    icon: UserCheck,
+    label: "Subscriptions",
+    adminRoute: true,
+  },
 ];
 
 const AppSidebar = ({
@@ -34,7 +40,7 @@ const AppSidebar = ({
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const { state } = useSidebar(); // "expanded" | "collapsed"
-  const showAlert = useAlertStore((s) => s.showAlert)
+  const showAlert = useAlertStore((s) => s.showAlert);
 
   const isCollapsed = state === "collapsed";
   const initials = user?.username?.[0]?.toUpperCase() ?? "U";
@@ -45,8 +51,8 @@ const AppSidebar = ({
 
       // Most logout endpoints return 200 or 204
       if (response.status === 200 || response.status === 204) {
-        // Clear auth state 
-        logout()
+        // Clear auth state
+        logout();
 
         showAlert(
           "Logged out",
@@ -80,16 +86,22 @@ const AppSidebar = ({
 
           <SidebarGroupContent>
             <SidebarMenu className="gap-2">
-              {navItems.map(({ to, icon: Icon, label }) => (
-                <SidebarMenuItem key={to}>
-                  <SidebarMenuButton asChild className="text-base">
-                    <Link to={to}>
-                      <Icon className="mr-2 h-5 w-5" />
-                      {label}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map(({ to, icon: Icon, label, adminRoute }) => {
+                if (adminRoute && user?.role !== "admin") {
+                  return;
+                }
+
+                return (
+                  <SidebarMenuItem key={to}>
+                    <SidebarMenuButton asChild className="text-base">
+                      <Link to={to}>
+                        <Icon className="mr-2 h-5 w-5" />
+                        {label}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

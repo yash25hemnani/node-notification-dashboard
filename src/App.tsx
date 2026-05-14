@@ -17,6 +17,8 @@ import Templates from "./pages/templates/Templates";
 import ViewEmailTemplate from "./pages/templates/ViewEmailTemplate";
 import ViewPushTemplate from "./pages/templates/ViewPushTemplate";
 import ViewSingleNotification from "./pages/notifications/ViewSingleNotification";
+import ViewSingleSubscription from "./pages/subscriptions/ViewSingleSubscription";
+import AllSubscriptions from "./pages/subscriptions/AllSubscriptions";
 
 export const App = () => {
   const [isRestoring, setIsRestoring] = useState(true);
@@ -62,6 +64,16 @@ export const App = () => {
               path: "/api-keys",
               element: <MainLayout />,
               children: [{ index: true, element: <ApiKeys /> }],
+            },
+            {
+              path: "/subscriptions",
+              element: <MainLayout />,
+              children: [{ index: true, element: <AllSubscriptions /> }],
+            },
+            {
+              path: "/subscriptions/:customerEmail",
+              element: <MainLayout />,
+              children: [{ index: true, element: <ViewSingleSubscription /> }],
             },
           ],
         },
