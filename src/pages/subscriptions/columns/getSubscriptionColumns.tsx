@@ -1,6 +1,6 @@
-import { type AppTableColumn } from "@/components/ui/app-table";
 import { Box } from "@/components/ui/box";
 import { Button } from "@/components/ui/button";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
 import type { Subscription } from "../types/subscription.types";
 
@@ -10,41 +10,43 @@ interface Payload extends Subscription {
 
 export const getSubscriptionColumns = (
   onDelete?: (subscription: Payload) => void,
-): AppTableColumn<Payload>[] => {
+): ColumnDef<Payload>[] => {
   return [
     {
-      key: "customerEmail",
-      label: "Email",
-      render: (row) => (
+      accessorKey: "customerEmail",
+      header: "Email",
+      cell: ({ row }) => (
         <a
-          href={`/subscriptions/${row.customerEmail}`}
+          href={`/subscriptions/${row.original.customerEmail}`}
           className="text-xs underline"
         >
-          {row.customerEmail ?? "—"}
+          {row.original.customerEmail ?? "—"}
         </a>
       ),
     },
     {
-      key: "customerId",
-      label: "Customer ID",
-      render: (row) => (
-        <span className="font-mono text-xs">{row.customerId ?? "—"}</span>
+      accessorKey: "customerId",
+      header: "Customer ID",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">{row.original.customerId ?? "—"}</span>
       ),
     },
     {
-      key: "count",
-      label: "Subscriptions",
-      render: (row) => <span className="text-xs font-medium">{row.count}</span>,
+      accessorKey: "count",
+      header: "Subscriptions",
+      cell: ({ row }) => (
+        <span className="text-xs font-medium">{row.original.count}</span>
+      ),
     },
     {
-      key: "actions",
-      label: "Actions",
-      render: (row) => (
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
         <Box>
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onDelete?.(row)}
+            onClick={() => onDelete?.(row.original)}
             className="h-8 w-8 text-red-500 hover:text-red-600"
           >
             <Trash2 className="h-4 w-4" />
