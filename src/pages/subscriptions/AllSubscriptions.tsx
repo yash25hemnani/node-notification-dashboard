@@ -33,10 +33,14 @@ const EMPTY_PAGINATION: PaginationMeta = {
 const fetchSubscriptions = async (
   queryParams: Record<string, string>,
   customerEmail: string | null,
-  search: string
+  search: string,
 ): Promise<SubscriptionsResponse> => {
   const response = await apiClient.get("/admin/subscriptions", {
-    params: { customerEmail: customerEmail || undefined, ...queryParams, search },
+    params: {
+      customerEmail: customerEmail || undefined,
+      ...queryParams,
+      search,
+    },
   });
   return {
     data: response.data.data,
@@ -48,7 +52,7 @@ const AllSubscriptions = () => {
   const showAlert = useAlertStore((s) => s.showAlert);
   const [searchParams] = useSearchParams();
   const customerEmail = searchParams.get("customerEmail");
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState("");
 
   const { onPageChange, onLimitChange, queryParams } = usePaginatedTable({
     initialLimit: 20,
@@ -72,7 +76,10 @@ const AllSubscriptions = () => {
       <Box className="flex flex-col gap-4">
         <SearchBar
           placeholder="Search Subscriptions..."
-          
+          onChange={(val) => {
+            setSearch(val);
+            onPageChange(1);
+          }}
         />
         <DataTable
           columns={columns}
