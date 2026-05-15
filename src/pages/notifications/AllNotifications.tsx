@@ -14,6 +14,7 @@ import { useParams } from "react-router-dom";
 import { getQueueBoardColumns } from "../dashboard/columns/getQueueBoardColumns";
 import type { Job } from "../dashboard/types/dashboard.type";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import SearchBar from "@/components/ui/search-bar";
 
 const isDev = import.meta.env.MODE === "development";
 
@@ -36,9 +37,10 @@ const fetchJobs = async (
   channel: string,
   state: string,
   queryParams: Record<string, string>,
+  search: string
 ): Promise<JobsResponse> => {
   const response = await apiClient.get(`/notification/queue/jobs`, {
-    params: { queue: channel, state, ...queryParams },
+    params: { queue: channel, state, ...queryParams, search },
   });
   return {
     data: response.data.data,
@@ -52,6 +54,7 @@ const JobList = ({ channel, state }: { channel: string; state: string }) => {
   const showAlert = useAlertStore((s) => s.showAlert);
   const { lastEvent } = useDashboardStream();
   const queryClient = useQueryClient();
+  const [search, setSearch] = useState("")
 
   // Pagination state + handlers
   const { onPageChange, onLimitChange, queryParams } = usePaginatedTable({
@@ -61,9 +64,9 @@ const JobList = ({ channel, state }: { channel: string; state: string }) => {
   // Fetch jobs with React Query, keyed by channel + state + pagination + lastEvent (for real-time updates)
   const { data, isLoading } = useQuery({
     // Key includes channel, state, pagination params, and lastEvent to refetch on new events
-    queryKey: ["queue-jobs", channel, state, queryParams, lastEvent],
+    queryKey: ["queue-jobs", channel, state, queryParams, lastEvent, search],
     // Query function calls our fetchJobs util with current channel, state, and pagination query params
-    queryFn: () => fetchJobs(channel, state, queryParams),
+    queryFn: () => fetchJobs(channel, state, queryParams, search),
     // Keep previous data while fetching next page — avoids table flicker
     placeholderData: (prev) => prev,
   });
@@ -88,7 +91,7 @@ const JobList = ({ channel, state }: { channel: string; state: string }) => {
         setSelectedJob(null);
         // Invalidate to refetch after delete
         queryClient.invalidateQueries({
-          queryKey: ["queue-jobs", channel, state],
+          queryKey: ["queue-jobs", channel, state, search],
         });
       }
     } catch (error) {
@@ -102,6 +105,14 @@ const JobList = ({ channel, state }: { channel: string; state: string }) => {
 
   return (
     <Box className="mt-4">
+      <SearchBar
+        placeholder="Search Notifications..."
+        className="mb-4"
+        onChange={(val) => {
+          setSearch(val);
+          onPageChange(1);
+        }}
+      />
       {/* Job List */}
       <DataTable
         columns={columns}

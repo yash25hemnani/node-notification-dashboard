@@ -39,7 +39,7 @@ const fetchSubscriptions = async (
     params: { customerEmail: customerEmail || undefined, ...queryParams, search },
   });
   return {
-    data: response.data.data.subscriptions,
+    data: response.data.data,
     pagination: response.data.pagination,
   };
 };
@@ -72,10 +72,7 @@ const AllSubscriptions = () => {
       <Box className="flex flex-col gap-4">
         <SearchBar
           placeholder="Search Subscriptions..."
-          onChange={(val) => {
-            setSearch(val);
-            onPageChange(1);
-          }}
+          
         />
         <DataTable
           columns={columns}
