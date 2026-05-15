@@ -8,6 +8,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { getSubscriptionColumns } from "./columns/getSubscriptionColumns";
 import type { Subscription } from "./types/subscription.types";
+import SearchBar from "@/components/ui/search-bar";
+import { Box } from "@/components/ui/box";
+import { useState } from "react";
 
 interface Payload extends Subscription {
   count: number;
@@ -30,9 +33,10 @@ const EMPTY_PAGINATION: PaginationMeta = {
 const fetchSubscriptions = async (
   queryParams: Record<string, string>,
   customerEmail: string | null,
+  search: string
 ): Promise<SubscriptionsResponse> => {
   const response = await apiClient.get("/admin/subscriptions", {
-    params: { customerEmail: customerEmail || undefined, ...queryParams },
+    params: { customerEmail: customerEmail || undefined, ...queryParams, search },
   });
   return {
     data: response.data.data.subscriptions,
@@ -44,13 +48,15 @@ const AllSubscriptions = () => {
   const showAlert = useAlertStore((s) => s.showAlert);
   const [searchParams] = useSearchParams();
   const customerEmail = searchParams.get("customerEmail");
+  const [search, setSearch] = useState("")
 
-  const { onPageChange, onLimitChange, queryParams } =
-    usePaginatedTable({ initialLimit: 20 });
+  const { onPageChange, onLimitChange, queryParams } = usePaginatedTable({
+    initialLimit: 20,
+  });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["subscriptions", customerEmail, queryParams],
-    queryFn: () => fetchSubscriptions(queryParams, customerEmail),
+    queryKey: ["subscriptions", customerEmail, queryParams, search],
+    queryFn: () => fetchSubscriptions(queryParams, customerEmail, search),
     placeholderData: (prev) => prev,
     throwOnError: (error) => {
       const { code, message } = extractApiError(error);
@@ -63,14 +69,23 @@ const AllSubscriptions = () => {
 
   return (
     <PageContainer heading="Subscriptions">
-      <DataTable
-        columns={columns}
-        data={data?.data ?? []}
-        pagination={data?.pagination ?? EMPTY_PAGINATION}
-        isLoading={isLoading}
-        onPageChange={onPageChange}
-        onLimitChange={onLimitChange}
-      />
+      <Box className="flex flex-col gap-4">
+        <SearchBar
+          placeholder="Search Subscriptions..."
+          onChange={(val) => {
+            setSearch(val);
+            onPageChange(1);
+          }}
+        />
+        <DataTable
+          columns={columns}
+          data={data?.data ?? []}
+          pagination={data?.pagination ?? EMPTY_PAGINATION}
+          isLoading={isLoading}
+          onPageChange={onPageChange}
+          onLimitChange={onLimitChange}
+        />
+      </Box>
     </PageContainer>
   );
 };
