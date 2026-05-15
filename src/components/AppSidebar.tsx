@@ -23,7 +23,7 @@ import { Button } from "./ui/button";
 const navItems = [
   { to: "/", icon: Home, label: "Dashboard" },
   { to: "/templates", icon: LayoutTemplate, label: "Templates" },
-  { to: "/api-keys", icon: KeySquare, label: "API Keys" },
+  { to: "/keys", icon: KeySquare, label: "API Keys" },
   {
     to: "/subscriptions",
     icon: UserCheck,

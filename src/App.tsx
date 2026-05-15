@@ -61,7 +61,7 @@ export const App = () => {
               children: [{ index: true, element: <ViewPushTemplate /> }],
             },
             {
-              path: "/api-keys",
+              path: "/keys",
               element: <MainLayout />,
               children: [{ index: true, element: <ApiKeys /> }],
             },
